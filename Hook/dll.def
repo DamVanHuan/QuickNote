@@ -1,0 +1,5 @@
+LIBRARY "DLL.dll"
+
+EXPORTS 
+	doInitHook @1
+	doRemoveHook @2
