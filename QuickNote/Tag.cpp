@@ -49,16 +49,7 @@ void Tag::AddNote(Note note)
 	this->listNote.push_back(note);
 }
 
-void Tag::RemoveNote(wstring nameNote)
+void Tag::RemoveNote(int index)
 {
-	int size = this->listNote.size();
-
-	for (int i = 0; i < size; i++)
-	{
-		if (nameNote.compare(this->listNote[i].GetName()) == 0)
-		{
-			listNote.erase(listNote.begin() + i);
-			break;
-		}
-	}
+	listNote.erase(listNote.begin() + index);
 }

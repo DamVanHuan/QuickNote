@@ -18,21 +18,28 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode < 0)
 		return CallNextHookEx(hHook, nCode, wParam, lParam);
 
-	if (GetAsyncKeyState(VK_CONTROL) && GetAsyncKeyState(VK_SHIFT) && GetAsyncKeyState(0x4E)) //0x4E: key "N"
+	//getstate & 0x800 <==> getsate & (1 << 15) --> check hightest bit is set or not
+	if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && 
+		(GetAsyncKeyState(VK_SHIFT) & 0x8000) && 
+		(GetAsyncKeyState(0x4E) & 0x8000)) //0x4E: key "N"
 	{
 		PostMessage(hwnd, WM_COMMAND, IDC_POPUP_NEWNOTE, 0);//IDC_POPUP_NEWNOTE = 117
 	}
 	else
-	if (GetAsyncKeyState(VK_CONTROL) && GetAsyncKeyState(VK_SHIFT) && GetAsyncKeyState(0x45)) //0x45: key "E"
+	if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && 
+		(GetAsyncKeyState(VK_SHIFT) & 0x8000) && 
+		(GetAsyncKeyState(0x45) & 0x8000)) //0x45: key "E"
 	{
-		DestroyWindow(hwnd);
+		DestroyWindow(hwnd);//thoát chương trình (CTR SHIFT E)
 	}
 	else
-	if (GetAsyncKeyState(VK_CONTROL) && GetAsyncKeyState(VK_SHIFT) && GetAsyncKeyState(0x53)) //0x53: key "S"
+	if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && 
+		(GetAsyncKeyState(VK_SHIFT) & 0x8000) && 
+		(GetAsyncKeyState(0x53) & 0x8000)) //0x53: key "S"
 	{
 		PostMessage(hwnd, WM_COMMAND, IDC_POPUP_VIEWSTATISTIC, 0);//IDC_POPUP_VIEWSTATISTIC = 115
 	}
-	
+	//else
 	return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 

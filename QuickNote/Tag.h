@@ -20,6 +20,6 @@ public:
 	void SetNoteList(vector<Note>);
 
 	void AddNote(Note);
-	void RemoveNote(wstring nameNote);
+	void RemoveNote(int);
 };
 

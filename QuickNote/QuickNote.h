@@ -36,12 +36,16 @@ vector<Tag*> listTag;			//save all tag
 const int BUFLEN = 255;
 BOOL g_isOpeningDlg = FALSE;	//kiểm tra xem nếu đang mở dialog AddNote thì k cho mở tiếp dialog Addnote khác
 int g_selectedItemListTags = -1;//lưu index của item trong listview tag đang được chọn
+int g_selectedItemListNotes = -2;//lưu index của item trong listview note đang được chọn
 bool g_isHookInstalled = false;	//xem cài đặt hook hay chưa
 
 //biến dùng trong phân trang
-#define ROWNUM 5 //số dòng trong 1 page
-int g_totalPage = 0;
-int g_curPage = 2;//trang bắt đầu là 1
+#define ROWNUMTAG 10 //số dòng trong 1 page
+#define ROWNUMNOTE 10
+int g_totalPageTag = 0;
+int g_curPageTag = 1;//trang bắt đầu là 1
+int g_totalPageNote = 0;
+int g_curPageNote = 1;
 
 //--------------------- insert item to listbox ------------------------------
 void InsertItemListTag(HWND hListview, Tag* tag, int iItem, int stt)
@@ -64,43 +68,25 @@ void InsertItemListTag(HWND hListview, Tag* tag, int iItem, int stt)
 	ListView_SetItemText(hListview, iItem, 2, _itow(tag->GetFreq(), szFreq, 10));
 }
 
-//void UpdateItemListTag(HWND hListview, Tag* tag, int stt)
-//{
-//	WCHAR szName[255] = L"";
-//	WCHAR szFreq[10] = L"";
-//
-//	wcscat(szName, tag->GetName().c_str());
-//
-//	ListView_SetItemText(hListview, stt, 1, szName);
-//	ListView_SetItemText(hListview, stt, 2, _itow(tag->GetFreq(), szFreq, 10));
-//}
-
-void InsertItemToListNote(HWND hListview, vector<Note> listNote)
+void InsertItemToListNote(HWND hListview, Note note, int iItem, int stt)
 {
-	int size = listNote.size();
 	WCHAR szSTT[10] = L"";
-	WCHAR szName[BUFLEN];
-	WCHAR szDateCreated[BUFLEN];
+	WCHAR szName[255] = L"";
+	WCHAR szDateCreated[17] = L"";
 
-	ListView_DeleteAllItems(hListview);
+	wcscat(szName, note.GetName().c_str());
+	wcscat(szDateCreated, note.GetTimeCreated().c_str());
 
-	for (int i = 0; i < size; i++)
-	{
-		LV_ITEM lv;
+	LV_ITEM lv;
 
-		lv.mask = LVIF_TEXT;
-		lv.iItem = i;
-		lv.iSubItem = 0;
-		lv.pszText = _itow(i + 1, szSTT, 10);
+	lv.mask = LVIF_TEXT;
+	lv.iItem = iItem;
+	lv.iSubItem = 0;
+	lv.pszText = _itow(stt + 1, szSTT, 10);
+	ListView_InsertItem(hListview, &lv);
 
-		ListView_InsertItem(hListview, &lv);
-
-		wsprintf(szName, L"%s", listNote[i].GetName().c_str());
-		wsprintf(szDateCreated, L"%s", listNote[i].GetTimeCreated().c_str());
-
-		ListView_SetItemText(hListview, i, 1, szName);
-		ListView_SetItemText(hListview, i, 2, szDateCreated);
-	}
+	ListView_SetItemText(hListview, iItem, 1, szName);
+	ListView_SetItemText(hListview, iItem, 2, szDateCreated);
 }
 
 //--------------------- sort list tag by freq ----------------------
@@ -119,16 +105,6 @@ void SortListTags(vector<Tag*> &list)
 		}
 	}
 }
-
-//void SortListViewTag(HWND hListview, vector<Tag*> list)
-//{
-//	ListView_DeleteAllItems(hListview);
-//
-//	for (int i = 0; i < list.size(); i++)
-//	{
-//		InsertItemListTag(hListview, list[i], i);
-//	}
-//}
 
 //--------------------- xử lý chuỗi, tính toán đưa tag và note vào listNote -----------------
 //return -1: tag chưa tồn tại --> thêm tag mới
@@ -191,7 +167,7 @@ wstring SplitTag(wstring &listTag)//xử lí dấu ',' và dấu khoảng trắn
 }
 
 //--------------------- Load icon to notification area ---------------------
-void SetIconNotificationArea(HINSTANCE hInstance, HWND hWnd, NOTIFYICONDATA nid)
+void SetIconNotificationArea(HINSTANCE hInstance, HWND hWnd, NOTIFYICONDATA &nid)
 {
 	HICON hIcon;
 	hIcon = LoadIcon(hInstance, (LPCTSTR)MAKEINTRESOURCE(IDI_SMALL));
@@ -232,13 +208,13 @@ void InitColumnListNotes(HWND lvwNotes)
 
 	lvCol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
 	lvCol.fmt = LVCFMT_LEFT;
-	lvCol.cx = 110;
-	lvCol.pszText = L"Tên";
+	lvCol.cx = 120;
+	lvCol.pszText = L"Tên note";
 	ListView_InsertColumn(lvwNotes, 1, &lvCol);
 
 	lvCol.fmt = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
 	lvCol.fmt = LVCFMT_LEFT;
-	lvCol.cx = 100;
+	lvCol.cx = 110;
 	lvCol.pszText = L"Thời gian tạo";
 	ListView_InsertColumn(lvwNotes, 2, &lvCol);
 }
@@ -255,13 +231,13 @@ void InitColumnListTags(HWND lvwTag)
 
 	lvCol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
 	lvCol.fmt = LVCFMT_LEFT;
-	lvCol.cx = 160;
-	lvCol.pszText = L"Tên";
+	lvCol.cx = 170;
+	lvCol.pszText = L"Tên tag";
 	ListView_InsertColumn(lvwTag, 1, &lvCol);
 
 	lvCol.fmt = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
 	lvCol.fmt = LVCFMT_LEFT;
-	lvCol.cx = 50;
+	lvCol.cx = 60;
 	lvCol.pszText = L"Số note";
 	ListView_InsertColumn(lvwTag, 2, &lvCol);
 }
@@ -272,7 +248,7 @@ void SetSystemFont(HWND hwnd)
 	LOGFONT lf;
 	GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
 
-	HFONT hFont = CreateFont(lf.lfHeight, lf.lfWidth,
+	HFONT hFont = CreateFont(16, lf.lfWidth,
 		lf.lfEscapement, lf.lfOrientation, lf.lfWeight,
 		lf.lfItalic, lf.lfUnderline, lf.lfStrikeOut, lf.lfCharSet,
 		lf.lfOutPrecision, lf.lfClipPrecision, lf.lfQuality,
@@ -455,7 +431,7 @@ void DrawPieChart(vector<Tag*> list, HDC hdc, HWND hDlg)
 		//set explication
 		graphic.FillPie(listBrush[i], xExPlication, yExplication, 60, 60, -45, 45);
 		
-		wsprintf(szExplication1, L"Tag %s", list[i]->GetName().c_str());
+		wsprintf(szExplication1, L"TAG: %s", list[i]->GetName().c_str());
 		wsprintf(szExplication2, L"%d note (%d.%d %%)", list[i]->GetFreq(), (int)degree, GetDecimalPart(degree));
 		SetDlgItemText(hDlg, idTxtExplication[i * 2], szExplication1);
 		SetDlgItemText(hDlg, idTxtExplication[i*2 + 1], szExplication2);
@@ -538,22 +514,46 @@ void RemoveHook(HWND hwnd)
 }
 
 //---------------------- Phân trang list view --------------
-void PhanTrangLvwTags(HWND hlvwTag, HWND hTotalPage, HWND hCurPage, vector<Tag*> list, int iTotalPage, int iCurPage)
+void PhanTrangLvwTags(HWND hlvwTag, vector<Tag*> list, int iTotalPage, int iCurPage)
 {
+	ListView_DeleteAllItems(hlvwTag);
+
 	int sumRecord = list.size();
-	int indexList = ROWNUM*(iCurPage - 1);
+	int indexList = ROWNUMTAG*(iCurPage - 1);
 	
-	for (int i = 0; (i < ROWNUM) && (indexList < sumRecord); i++)
+	for (int i = 0; (i < ROWNUMTAG) && (indexList < sumRecord); i++)
 	{
 		InsertItemListTag(hlvwTag, list[indexList], i, indexList);
 		indexList++;
 	}
-
-	SetWindowText(hTotalPage, to_wstring(iTotalPage).c_str());
-	SetWindowText(hCurPage, to_wstring(iCurPage).c_str());
 }
 
-void PhanTrangLvwNotes(HWND lwvNote)
+void PhanTrangLvwNotes(HWND lvwNote, vector<Note> list, int iTotalPage, int iCurPage)
 {
+	ListView_DeleteAllItems(lvwNote);
 
+	int sumRecord = list.size();
+	int indexList = ROWNUMNOTE*(iCurPage - 1);
+	
+	for (int i = 0; (i < ROWNUMNOTE) && (indexList < sumRecord); i++)
+	{
+		InsertItemToListNote(lvwNote, list[indexList], i, indexList);
+		indexList++;
+	}
+}
+
+void AddDataCbb(HWND hCbb, int totalPage, int indexPageCur)
+{
+	int countItemCBB = ComboBox_GetCount(hCbb);
+	
+	for (int i = 0; i < countItemCBB; i++)
+	{
+		ComboBox_DeleteString(hCbb, 0);
+	}
+	
+	for (int i = 0; i < totalPage; i++)
+	{
+		ComboBox_AddString(hCbb, to_wstring(i + 1).c_str());
+	}
+	ComboBox_SetCurSel(hCbb, indexPageCur - 1);
 }
