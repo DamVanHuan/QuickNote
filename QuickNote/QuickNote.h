@@ -4,7 +4,6 @@
 
 #include "Note.h"
 #include "Tag.h"
-
 #include <Windowsx.h>
 
 #include <Shellapi.h> //NOTIFYICONDATA
@@ -40,14 +39,14 @@ int g_selectedItemListNotes = -2;//lưu index của item trong listview note đa
 bool g_isHookInstalled = false;	//xem cài đặt hook hay chưa
 
 //biến dùng trong phân trang
-#define ROWNUMTAG 10 //số dòng trong 1 page
-#define ROWNUMNOTE 10
+#define ROWNUMTAG 10 //số dòng trong 1 page tag
+#define ROWNUMNOTE 10 //số dòng trong 1 page note
 int g_totalPageTag = 0;
 int g_curPageTag = 1;//trang bắt đầu là 1
 int g_totalPageNote = 0;
 int g_curPageNote = 1;
 
-//--------------------- insert item to listbox ------------------------------
+//--------------------- insert item to listview ------------------------------
 void InsertItemListTag(HWND hListview, Tag* tag, int iItem, int stt)
 {
 	WCHAR szSTT[10] = L"";
@@ -183,7 +182,7 @@ void SetIconNotificationArea(HINSTANCE hInstance, HWND hWnd, NOTIFYICONDATA &nid
 	Shell_NotifyIcon(NIM_ADD, &nid);
 }
 
-//--------------------- Load icon to notification area ---------------------
+//--------------------- Popup menu khi click phải vào icon ở khu vực thông báo ---------------------
 void ShowPopupMenu(HWND hWnd, int cX, int cY, HMENU hPopupMenu)
 {
 	//insert item to popup menu
@@ -195,7 +194,7 @@ void ShowPopupMenu(HWND hWnd, int cX, int cY, HMENU hPopupMenu)
 	TrackPopupMenu(hPopupMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, cX, cY, 0, hWnd, NULL); //show popup menu
 }
 
-//--------------------- Listview ---------------------
+//--------------------- Khởi tạo Listview ---------------------
 void InitColumnListNotes(HWND lvwNotes)
 {
 	LVCOLUMN lvCol;
@@ -265,7 +264,7 @@ void SetSystemFont(HWND hwnd)
 //	dòng 4: nội dung note 1
 //	dòng 5: thời gian tạo note 1
 //	dòng 6+7+8: cấu trúc note2 như note1
-//	tương tự cho các dòng là note và các tag
+//	tương tự cho các dòng là note, hết note của tag 1 thì đến tag 2 và cứ thế cho đến hết các tag
 BOOL SaveTags(vector<Tag*> list)
 {
 	wofstream wof("Tags.txt", ios::out);
@@ -471,7 +470,7 @@ void DrawPieChart(vector<Tag*> list, HDC hdc, HWND hDlg)
 	SetDlgItemText(hDlg, IDC_LB_TONGTAG, szTotalTag);
 }
 
-//--------------------- hook -----------------------------
+//--------------------- hook phím tắt -----------------------------
 //Bắt sự kiện "CTRL SHIFT N" để mở dialog AddNote
 //"CTRL SHIFT S" để mở dialog Statistic (thống kê)
 //"CTRL SHIFT E" để thoát chương trình
@@ -556,4 +555,10 @@ void AddDataCbb(HWND hCbb, int totalPage, int indexPageCur)
 		ComboBox_AddString(hCbb, to_wstring(i + 1).c_str());
 	}
 	ComboBox_SetCurSel(hCbb, indexPageCur - 1);
+}
+
+//---------------------- Gợi ý tag khi gõ -----------------
+void HintTag()
+{
+
 }
